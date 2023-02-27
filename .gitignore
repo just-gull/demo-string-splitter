@@ -3,3 +3,6 @@
 
 # exclude build folder
 .build/
+
+# exclude output directory
+output/
