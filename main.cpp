@@ -2,6 +2,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include "input-content.hpp"
+
 static void print_usage() {
   std::cout << "Usage: ./demo-splitter <path-to-directory-with-input-files> <path-to-output-file>" << std::endl;
 }
@@ -24,8 +26,14 @@ int main(int argc, char** argv) {
     output_file.open(argv[2]);
     for (const auto& entry : std::filesystem::directory_iterator{ input_dir_path }) {
       if (entry.is_regular_file()) {
-        output_file << "[Имя файла " << entry.path().filename().string() << "]:" << std::endl; 
-        std::cout << "Found file: " << entry.path().filename().string() << std::endl;
+        // loading content from input file
+        InputContent input_content{ entry.path() };
+        output_file << "[Имя файла " << input_content.input_file_name << "]:"; 
+        for (auto str : input_content) {
+          output_file << "\n" << str;
+        }
+        output_file << std::endl;
+        std::cout << "Processed file: " << input_content.input_file_name << std::endl;
       }
     }
     output_file.close();
