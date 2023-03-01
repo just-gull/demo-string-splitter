@@ -1,7 +1,7 @@
 #include "input-content.hpp"
 
 // InputContent implementation
-InputContent::InputContent(std::filesystem::path input_path) : input_file_name{ input_path.filename() } {
+InputContent::InputContent(std::filesystem::path input_path) {
   std::ifstream input_file;
   input_file.open(input_path);
   // читаем основную строку из файла

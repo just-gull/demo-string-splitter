@@ -23,7 +23,6 @@ class InputContent {
   std::vector<std::string> delimiters;
 
 public:
-  const std::string input_file_name;
   InputContent(std::filesystem::path input_path);
   InputContentIterator begin() const;
   size_t end() const; 

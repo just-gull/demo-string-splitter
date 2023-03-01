@@ -1,6 +1,11 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <thread>
+#include <mutex>
+#include <boost/asio/thread_pool.hpp>
+#include <boost/asio/post.hpp>
+#include <stdexcept>
 
 #include "input-content.hpp"
 
@@ -20,25 +25,41 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  std::ofstream output_file;
-  output_file.exceptions( std::ofstream::badbit | std::ofstream::failbit );
-  try {
-    output_file.open(argv[2]);
+  std::ofstream output_file{ argv[2] };
+  if (output_file.is_open()) {
+    boost::asio::thread_pool pool{ std::thread::hardware_concurrency() };
+    std::mutex write_mutex;
     for (const auto& entry : std::filesystem::directory_iterator{ input_dir_path }) {
       if (entry.is_regular_file()) {
-        // loading content from input file
-        InputContent input_content{ entry.path() };
-        output_file << "[Имя файла " << input_content.input_file_name << "]:"; 
-        for (auto str : input_content) {
-          output_file << "\n" << str;
-        }
-        output_file << std::endl;
-        std::cout << "Processed file: " << input_content.input_file_name << std::endl;
+        boost::asio::post(pool, [&output_file, &write_mutex, entry]() {
+          try {
+            const auto filename = entry.path().filename().string();
+            // читаем подстроки из входящего файла во временный вектор
+            // чтобы можно было бы это делать в несколько потоков
+            std::vector<std::string> substrings{};
+            for (auto str: InputContent{ entry.path() }) { 
+              substrings.push_back(str);
+            }
+            // сохраняем подстроки в файл, используя лок на запись,
+            // чтобы подстроки одного файла не пересекались с подстроками
+            // других файлов
+            std::lock_guard write_lock{ write_mutex };
+            output_file << "[Имя файла " << filename << "]:"; 
+            for (auto str : substrings) {
+              output_file << "\n" << str;
+            }
+            output_file << std::endl;
+            std::cout << "Processed file: " << filename << std::endl;
+          } catch (std::exception& e) {
+            std::cerr << "Error: '" << e.what() << "' while processing " << entry.path().string() << ". Skipping..." << std::endl;
+          }
+        });
       }
     }
+    pool.join();
     output_file.close();
-  } catch (std::ofstream::failure e) {
-    std::cerr << "Error while writing to " << argv[2] << ": " << e.what() << std::endl;
+  } else {
+    std::cerr << "Error opening output file '" << argv[2] << "'" << std::endl;
   }
 
   return 0;
