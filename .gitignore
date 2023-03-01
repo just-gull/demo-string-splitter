@@ -1,8 +1,9 @@
 # exclude vscode configuration
 .vscode/
 
-# exclude build folder
+# exclude build folders
 .build/
+.cmake-build/
 
 # exclude output directory
 output/
