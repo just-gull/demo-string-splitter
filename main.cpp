@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
           try {
             const auto filename = entry.path().filename().string();
             // читаем подстроки из входящего файла во временный вектор
-            // чтобы можно было бы это делать в несколько потоков
+            // чтобы можно было читать разные файлы в отдельных потоках
             std::vector<std::string> substrings{};
             for (auto str: InputContent{ entry.path() }) { 
               substrings.push_back(str);
