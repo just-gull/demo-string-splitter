@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <filesystem>
 #include <fstream>
 
 struct InputContentIterator {
